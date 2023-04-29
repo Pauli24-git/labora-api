@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -51,11 +52,6 @@ var items = []Item{
 	{ID: "9", Name: "Bokita"},
 	{ID: "10", Name: "Burzaco"},
 }
-
-// func getItems(w http.ResponseWriter, r *http.Request) {
-
-// 	json.NewEncoder(w).Encode(items)
-// }
 
 func getItems(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
@@ -114,15 +110,6 @@ func getItem(w http.ResponseWriter, r *http.Request) {
 	if !encontrado {
 		json.NewEncoder(w).Encode("No se encontro ningun registro con ese id o nombre")
 	}
-	// params := mux.Vars(r)
-	// for _, item := range items {
-	// 	if item.ID == params["id"] {
-	// 		json.NewEncoder(w).Encode(item.Name)
-	// 	}
-	// 	if item.ID == params["name"] {
-	// 		json.NewEncoder(w).Encode(item.Name)
-	// 	}
-	// }
 }
 
 func createItem(w http.ResponseWriter, r *http.Request) {
@@ -180,14 +167,20 @@ type ItemDetails struct {
 func getDetails(w http.ResponseWriter, r *http.Request) {
 	wg := &sync.WaitGroup{}
 	detailsChannel := make(chan ItemDetails, len(items))
-	detailedItems := make([]ItemDetails, len(items))
+	detailedItems := []ItemDetails{}
+	var errors []error
 
 	for _, item := range items {
 		wg.Add(1) // Creamos el escucha, sin aun crearse la gorutina
 
 		go func(id string) {
 			defer wg.Done() //Completamos el trabajo del escucha, al final de esta ejecución
-			detailsChannel <- getItemDetails(id)
+			details, err := getItemDetails(id)
+			if err == nil {
+				detailsChannel <- details
+			} else {
+				errors = append(errors, err)
+			}
 		}(item.ID)
 	}
 
@@ -199,37 +192,34 @@ func getDetails(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(detailedItems)
+	json.NewEncoder(w).Encode(errors)
 
+	//en este segundo encoder quise mostrar el slice de errores, pero por alguna razon no me deja, me los trae vacios
+	//Por que razon podria ser? No le pude encontrar la vuelta
 }
 
-func getItemDetails(id string) ItemDetails {
+func getItemDetails(id string) (ItemDetails, error) {
 	// Simula la obtención de detalles desde una fuente externa con un time.Sleep
 	time.Sleep(100 * time.Millisecond)
 	var foundItem Item
+	var errorEncontrado error
+	var ItemEncontrado bool
+
 	for _, item := range items {
-		if item.ID == id {
+		idNumero, _ := strconv.Atoi(item.ID)
+		if item.ID == id && idNumero%2 == 0 {
+			ItemEncontrado = true
 			foundItem = item
 			break
 		}
 	}
+
+	if !ItemEncontrado {
+		errorEncontrado = errors.New("No se pudo obtener el item" + id)
+	}
+
 	return ItemDetails{
 		Item:    foundItem,
 		Details: fmt.Sprintf("Detalles para el item %s", id),
-	}
+	}, errorEncontrado
 }
-
-// func getItemDetails(id string) ItemDetails {
-// 	// Simula la obtención de detalles desde una fuente externa con un time.Sleep
-// 	time.Sleep(100 * time.Millisecond)
-// 	var foundItem Item
-// 	for _, item := range items {
-// 		if item.ID == id {
-// 			foundItem = item
-// 			break
-// 		}
-// 	}
-// 	return ItemDetails{
-// 		Item:    foundItem,
-// 		Details: fmt.Sprintf("Detalles para el item %s", id),
-// 	}
-// }
