@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -23,6 +26,9 @@ func main() {
 	router.HandleFunc("/items", createItem).Methods("POST")
 	router.HandleFunc("/items", updateItem).Methods("PUT")
 	router.HandleFunc("/items/", deleteItem).Methods("DELETE")
+
+	//nuevo endpoint
+	router.HandleFunc("/items/details", getDetails).Methods("GET")
 
 	http.ListenAndServe(":8080", router)
 
@@ -165,3 +171,65 @@ func updateItem(w http.ResponseWriter, r *http.Request) {
 func deleteItem(w http.ResponseWriter, r *http.Request) {
 	// Función para eliminar un elemento
 }
+
+type ItemDetails struct {
+	Item
+	Details string `json:"details"`
+}
+
+func getDetails(w http.ResponseWriter, r *http.Request) {
+	wg := &sync.WaitGroup{}
+	detailsChannel := make(chan ItemDetails, len(items))
+	detailedItems := make([]ItemDetails, len(items))
+
+	for _, item := range items {
+		wg.Add(1) // Creamos el escucha, sin aun crearse la gorutina
+
+		go func(id string) {
+			defer wg.Done() //Completamos el trabajo del escucha, al final de esta ejecución
+			detailsChannel <- getItemDetails(id)
+		}(item.ID)
+	}
+
+	wg.Wait()
+	close(detailsChannel)
+
+	for details := range detailsChannel {
+		detailedItems = append(detailedItems, details)
+	}
+
+	json.NewEncoder(w).Encode(detailedItems)
+
+}
+
+func getItemDetails(id string) ItemDetails {
+	// Simula la obtención de detalles desde una fuente externa con un time.Sleep
+	time.Sleep(100 * time.Millisecond)
+	var foundItem Item
+	for _, item := range items {
+		if item.ID == id {
+			foundItem = item
+			break
+		}
+	}
+	return ItemDetails{
+		Item:    foundItem,
+		Details: fmt.Sprintf("Detalles para el item %s", id),
+	}
+}
+
+// func getItemDetails(id string) ItemDetails {
+// 	// Simula la obtención de detalles desde una fuente externa con un time.Sleep
+// 	time.Sleep(100 * time.Millisecond)
+// 	var foundItem Item
+// 	for _, item := range items {
+// 		if item.ID == id {
+// 			foundItem = item
+// 			break
+// 		}
+// 	}
+// 	return ItemDetails{
+// 		Item:    foundItem,
+// 		Details: fmt.Sprintf("Detalles para el item %s", id),
+// 	}
+// }
