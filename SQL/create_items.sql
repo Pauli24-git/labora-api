@@ -21,8 +21,8 @@ CREATE TABLE items (
     price NUMERIC NOT NULL,
 );
 
-INSERT INTO items (id, customer_name, order_date, product, quantity, price)
+INSERT INTO items (customer_name, order_date, product, quantity, price)
 
-VALUES (1, 'Pauli', '03-05-2023', 'Zapatillas', 2, 15000),
-       (2,'Lolis', '03-05-2023', 'Borcegos', 1, 75000),
-       (3, 'Misita', '03-05-2023', 'Sandalias', 3, 90000);
+VALUES ('Pauli', '03-05-2023', 'Zapatillas', 2, 15000),
+       ('Lolis', '03-05-2023', 'Borcegos', 1, 75000),
+       ('Misita', '03-05-2023', 'Sandalias', 3, 90000);
