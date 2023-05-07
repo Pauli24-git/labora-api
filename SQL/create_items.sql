@@ -18,7 +18,7 @@ CREATE TABLE items (
     order_date DATE NOT NULL,
     product VARCHAR(255) NOT NULL,
     quantity INTEGER NOT NULL,
-    price NUMERIC NOT NULL,
+    price NUMERIC NOT NULL
 );
 
 INSERT INTO items (customer_name, order_date, product, quantity, price)
