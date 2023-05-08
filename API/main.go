@@ -15,8 +15,8 @@ func main() {
 
 	router.HandleFunc("/items", controller.GetItems).Methods("GET")
 	router.HandleFunc("/item", controller.GetItem).Methods("GET")
-	// router.HandleFunc("/items", controller.CreateItem).Methods("POST")
-	// router.HandleFunc("/items", controller.UpdateItem).Methods("PUT")
+	router.HandleFunc("/items", controller.CreateItem).Methods("POST")
+	router.HandleFunc("/items", controller.UpdateItem).Methods("PUT")
 	// router.HandleFunc("/items/", controller.DeleteItem).Methods("DELETE")
 	// router.HandleFunc("/items/details", controller.GetDetails).Methods("GET")
 	http.ListenAndServe(":8080", router)
@@ -55,49 +55,6 @@ func main() {
 // 	// }
 // 	// Función para obtener todos los elementos
 // 	json.NewEncoder(response).Encode(items)
-// }
-
-// func createItem(w http.ResponseWriter, r *http.Request) {
-// 	var decodedItem Item
-// 	err := json.NewDecoder(r.Body).Decode(&decodedItem)
-
-// 	//no funciona, consultar despues porque no captura error o porque deja sumar cosas vacias
-// 	if err != nil {
-// 		json.NewEncoder(w).Encode(err)
-// 		panic("panikeamo")
-// 	}
-
-// 	items = append(items, decodedItem)
-// 	json.NewEncoder(w).Encode(items)
-
-// }
-
-// func updateItem(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	var nombreActualizado Item
-// 	err := json.NewDecoder(r.Body).Decode(&nombreActualizado)
-// 	query := r.URL.Query()
-// 	idBuscado := query.Get("id")
-
-// 	encontrado := false
-
-// 	if nombreActualizado.Name != "" {
-// 		for _, item := range items {
-// 			if (item.ID) == idBuscado {
-// 				item.Name = nombreActualizado.Name
-// 				encontrado = true
-// 				json.NewEncoder(w).Encode(item)
-// 			}
-// 		}
-// 	}
-
-// 	if !encontrado {
-// 		json.NewEncoder(w).Encode("No se encontro ningun registro con ese id o nombre")
-// 	}
-
-// 	if err != nil {
-// 		json.NewEncoder(w).Encode("error")
-// 	}
 // }
 
 // func deleteItem(w http.ResponseWriter, r *http.Request) {

@@ -2,8 +2,10 @@ package controller
 
 import (
 	"encoding/json"
+	"labora-api/API/model"
 	"labora-api/API/service"
 	"net/http"
+	"strconv"
 )
 
 func GetItems(response http.ResponseWriter, request *http.Request) {
@@ -34,48 +36,45 @@ func GetItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(item)
 }
 
-// func CreateItem(w http.ResponseWriter, r *http.Request) {
-// 	var decodedItem Item
-// 	err := json.NewDecoder(r.Body).Decode(&decodedItem)
+func CreateItem(w http.ResponseWriter, r *http.Request) {
+	var decodedItem model.Item
+	err := json.NewDecoder(r.Body).Decode(&decodedItem)
 
-// 	//no funciona, consultar despues porque no captura error o porque deja sumar cosas vacias
-// 	if err != nil {
-// 		json.NewEncoder(w).Encode(err)
-// 		panic("panikeamo")
-// 	}
+	if err != nil {
+		json.NewEncoder(w).Encode(err)
+		return
+	}
 
-// 	items = append(items, decodedItem)
-// 	json.NewEncoder(w).Encode(items)
+	id, err := service.CreateNewItem(decodedItem)
 
-// }
+	json.NewEncoder(w).Encode("El item fue creado correctamente. El numero de id es:")
+	json.NewEncoder(w).Encode(id)
 
-// func UpdateItem(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	var nombreActualizado Item
-// 	err := json.NewDecoder(r.Body).Decode(&nombreActualizado)
-// 	query := r.URL.Query()
-// 	idBuscado := query.Get("id")
+}
 
-// 	encontrado := false
+func UpdateItem(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 
-// 	if nombreActualizado.Name != "" {
-// 		for _, item := range items {
-// 			if (item.ID) == idBuscado {
-// 				item.Name = nombreActualizado.Name
-// 				encontrado = true
-// 				json.NewEncoder(w).Encode(item)
-// 			}
-// 		}
-// 	}
+	query := r.URL.Query()
+	idBuscado := query.Get("id")
+	nombre := query.Get("nombre")
 
-// 	if !encontrado {
-// 		json.NewEncoder(w).Encode("No se encontro ningun registro con ese id o nombre")
-// 	}
+	encontrado := false
+	idBuscadoConvertido, err := strconv.Atoi(idBuscado)
+	encontrado, err = service.UpdateItem(idBuscadoConvertido, nombre)
 
-// 	if err != nil {
-// 		json.NewEncoder(w).Encode("error")
-// 	}
-// }
+	if err != nil {
+		json.NewEncoder(w).Encode("error")
+		return
+	}
+
+	if !encontrado {
+		json.NewEncoder(w).Encode("No se encontro ningun registro con ese id")
+	} else {
+		json.NewEncoder(w).Encode("Actualizado correctamente")
+	}
+
+}
 
 // func DeleteItem(w http.ResponseWriter, r *http.Request) {
 // 	// Función para eliminar un elemento

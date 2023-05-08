@@ -19,3 +19,19 @@ func ObtainItem(id string) (*model.Item, error) {
 	}
 	return item, nil
 }
+
+func CreateNewItem(item model.Item) (*int, error) {
+	id, err := model.PostItem(item)
+	if err != nil {
+		return nil, err
+	}
+	return id, nil
+}
+
+func UpdateItem(id int, nombre string) (bool, error) {
+	encontrado, err := model.UpdateItem(id, nombre)
+	if err != nil {
+		return false, err
+	}
+	return encontrado, nil
+}

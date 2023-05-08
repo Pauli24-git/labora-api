@@ -85,3 +85,43 @@ func GetSingleItem(idBuscado string) (*Item, error) {
 	item := Item{id, name, date.Format("2006-01-02"), product, quantity, price}
 	return &item, err
 }
+
+func PostItem(item Item) (*int, error) {
+	db, err := config.GetDatabase()
+	defer db.Close()
+
+	if err != nil {
+		return nil, err
+	}
+
+	var id int
+	err = db.QueryRow("INSERT INTO items(customer_name, order_date, product, quantity, price) values ($1, $2, $3, $4, $5) RETURNING id", item.Name, item.Date, item.Product, item.Quantity, item.Price).Scan(&id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+
+}
+
+func UpdateItem(id int, nombre string) (bool, error) {
+	db, err := config.GetDatabase()
+	defer db.Close()
+
+	if err != nil {
+		return false, err
+	}
+
+	result, err := db.Exec("UPDATE items SET customer_name = $1 WHERE id =$2", nombre, id)
+
+	resultado, err := result.RowsAffected()
+	if resultado == 0 {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
