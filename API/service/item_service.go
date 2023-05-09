@@ -35,3 +35,11 @@ func UpdateItem(id int, nombre string) (bool, error) {
 	}
 	return encontrado, nil
 }
+
+func DeleteItem(id int) (bool, error) {
+	encontrado, err := model.DeleteItem(id)
+	if err != nil {
+		return false, err
+	}
+	return encontrado, nil
+}

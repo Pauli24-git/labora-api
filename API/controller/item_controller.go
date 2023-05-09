@@ -76,9 +76,25 @@ func UpdateItem(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// func DeleteItem(w http.ResponseWriter, r *http.Request) {
-// 	// Función para eliminar un elemento
-// }
+func DeleteItem(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	idBuscado := query.Get("id")
+
+	encontrado := false
+	idBuscadoConvertido, err := strconv.Atoi(idBuscado)
+	encontrado, err = service.DeleteItem(idBuscadoConvertido)
+
+	if err != nil {
+		json.NewEncoder(w).Encode("error")
+		return
+	}
+
+	if !encontrado {
+		json.NewEncoder(w).Encode("No se encontro ningun registro con ese id")
+	} else {
+		json.NewEncoder(w).Encode("Eliminado correctamente")
+	}
+}
 
 // func GetDetails(w http.ResponseWriter, r *http.Request) {
 // 	// Función para obtener el detalle de un item especifico

@@ -17,8 +17,8 @@ func main() {
 	router.HandleFunc("/item", controller.GetItem).Methods("GET")
 	router.HandleFunc("/items", controller.CreateItem).Methods("POST")
 	router.HandleFunc("/items", controller.UpdateItem).Methods("PUT")
-	// router.HandleFunc("/items/", controller.DeleteItem).Methods("DELETE")
-	// router.HandleFunc("/items/details", controller.GetDetails).Methods("GET")
+	router.HandleFunc("/items/", controller.DeleteItem).Methods("DELETE")
+
 	http.ListenAndServe(":8080", router)
 }
 

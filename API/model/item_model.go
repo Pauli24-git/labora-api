@@ -125,3 +125,24 @@ func UpdateItem(id int, nombre string) (bool, error) {
 	}
 	return true, nil
 }
+
+func DeleteItem(id int) (bool, error) {
+	db, err := config.GetDatabase()
+	defer db.Close()
+
+	if err != nil {
+		return false, err
+	}
+
+	result, err := db.Exec("DELETE FROM items WHERE id = $1", id)
+
+	resultado, err := result.RowsAffected()
+	if resultado == 0 {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
