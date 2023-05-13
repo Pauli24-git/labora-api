@@ -6,6 +6,7 @@ import (
 	"labora-api/API/service"
 	"net/http"
 	"strconv"
+	"sync"
 )
 
 func GetItems(response http.ResponseWriter, request *http.Request) {
@@ -24,16 +25,26 @@ func GetItems(response http.ResponseWriter, request *http.Request) {
 
 func GetItem(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	var wg sync.WaitGroup
+	var m sync.Mutex
 	query := r.URL.Query()
 	v := query.Get("id")
+	var item *model.Item
+	var err error
 
-	item, err := service.ObtainItem(v)
+	wg.Add(1)
+	go func() {
+		item, err = service.ObtainItem(v, &wg, &m)
+	}()
+	wg.Wait()
+
 	if err != nil {
 		json.NewEncoder(w).Encode("Hubo un error en la consulta " + err.Error())
 		return
 	}
+	json.NewEncoder(w).Encode(&item)
+	json.NewEncoder(w).Encode(model.Vistas)
 
-	json.NewEncoder(w).Encode(item)
 }
 
 func CreateItem(w http.ResponseWriter, r *http.Request) {

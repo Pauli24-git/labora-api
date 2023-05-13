@@ -1,45 +1,146 @@
 package service
 
 import (
+	"errors"
+	"labora-api/API/config"
 	"labora-api/API/model"
+	"strconv"
+	"sync"
+	"time"
 )
 
+var items = []model.Item{}
+
 func ObtainItems() ([]model.Item, error) {
-	items, err := model.GetAllItems()
+	db, err := config.GetDatabase()
+	defer db.Close()
+
 	if err != nil {
 		return nil, err
 	}
-	return items, nil
+
+	rows, err := db.Query("SELECT * FROM items")
+
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		var name string
+		var date time.Time
+		var product string
+		var quantity int
+		var price int
+		err := rows.Scan(&id, &name, &date, &product, &quantity, &price)
+		if err != nil {
+			return nil, err
+		}
+
+		item := model.Item{id, name, date.Format("2006-01-02"), product, quantity, price}
+		items = append(items, item)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, errors.New("Error en el servicio de base de datos:" + err.Error())
+	}
+
+	return items, err
 }
 
-func ObtainItem(id string) (*model.Item, error) {
-	item, err := model.GetSingleItem(id)
+func ObtainItem(idBuscado string, wg *sync.WaitGroup, m *sync.Mutex) (*model.Item, error) {
+	db, err := config.GetDatabase()
+	defer db.Close()
+
+	idBuscadoConvertido, err := strconv.Atoi(idBuscado)
 	if err != nil {
 		return nil, err
 	}
-	return item, nil
+
+	var id int
+	var name string
+	var date time.Time
+	var product string
+	var quantity int
+	var price int
+
+	err = db.QueryRow("SELECT * FROM items WHERE id=$1", idBuscadoConvertido).Scan(&id, &name, &date, &product, &quantity, &price)
+
+	if err != nil {
+		return nil, err
+	}
+
+	m.Lock()
+	model.Vistas += 1
+	m.Unlock()
+	wg.Done()
+
+	item := model.Item{id, name, date.Format("2006-01-02"), product, quantity, price}
+	return &item, err
 }
 
 func CreateNewItem(item model.Item) (*int, error) {
-	id, err := model.PostItem(item)
+	db, err := config.GetDatabase()
+	defer db.Close()
+
 	if err != nil {
 		return nil, err
 	}
-	return id, nil
+
+	var id int
+	err = db.QueryRow("INSERT INTO items(customer_name, order_date, product, quantity, price) values ($1, $2, $3, $4, $5) RETURNING id", item.Name, item.Date, item.Product, item.Quantity, item.Price).Scan(&id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+
 }
 
 func UpdateItem(id int, nombre string) (bool, error) {
-	encontrado, err := model.UpdateItem(id, nombre)
+	db, err := config.GetDatabase()
+	defer db.Close()
+
 	if err != nil {
 		return false, err
 	}
-	return encontrado, nil
+
+	result, err := db.Exec("UPDATE items SET customer_name = $1 WHERE id =$2", nombre, id)
+
+	resultado, err := result.RowsAffected()
+	if resultado == 0 {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func DeleteItem(id int) (bool, error) {
-	encontrado, err := model.DeleteItem(id)
+	db, err := config.GetDatabase()
+	defer db.Close()
+
 	if err != nil {
 		return false, err
 	}
-	return encontrado, nil
+
+	result, err := db.Exec("DELETE FROM items WHERE id = $1", id)
+
+	resultado, err := result.RowsAffected()
+	if resultado == 0 {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
