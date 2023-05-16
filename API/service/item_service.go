@@ -38,7 +38,8 @@ func ObtainItems() ([]model.Item, error) {
 			return nil, err
 		}
 
-		item := model.Item{id, name, date.Format("2006-01-02"), product, quantity, price}
+		// item := model.Item{ID: id, Name: name, Date: date.Format("2006-01-02"), Product: product, Quantity: quantity, Price: price}
+		item := model.NewItem(id, name, date.Format("2006-01-02"), product, quantity, price)
 		items = append(items, item)
 	}
 
@@ -68,8 +69,9 @@ func ObtainItem(idBuscado string, wg *sync.WaitGroup, m *sync.Mutex) (*model.Ite
 	var product string
 	var quantity int
 	var price int
+	var totalPrice int
 
-	err = db.QueryRow("SELECT * FROM items WHERE id=$1", idBuscadoConvertido).Scan(&id, &name, &date, &product, &quantity, &price)
+	err = db.QueryRow("SELECT * FROM items WHERE id=$1", idBuscadoConvertido).Scan(&id, &name, &date, &product, &quantity, &price, &totalPrice)
 
 	if err != nil {
 		return nil, err
@@ -77,10 +79,10 @@ func ObtainItem(idBuscado string, wg *sync.WaitGroup, m *sync.Mutex) (*model.Ite
 
 	m.Lock()
 	model.Vistas += 1
-	m.Unlock()
-	wg.Done()
+	defer m.Unlock()
 
-	item := model.Item{id, name, date.Format("2006-01-02"), product, quantity, price}
+	item := model.Item{ID: id, Name: name, Date: date.Format("2006-01-02"), Product: product, Quantity: quantity, Price: price, TotalPrice: totalPrice}
+	wg.Done()
 	return &item, err
 }
 
